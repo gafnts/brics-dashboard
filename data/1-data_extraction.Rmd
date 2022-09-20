@@ -1,0 +1,11 @@
+# Data extraction
+
+```{r}
+pacman::p_load(tidyverse, WDI)
+```
+
+#### Indicators
+
+```{r}
+
+```
