@@ -7,5 +7,93 @@ pacman::p_load(tidyverse, WDI)
 #### Indicators
 
 ```{r}
+indicators <- 
+  tibble(
+    name = c(
+      # Economic indicators
+      'Inflation, consumer prices (annual %)',
+      'Real interest rate (%)',
+      'Unemployment, total (% of total labor force)',
+      'Gross capital formation (% of GDP)',
+      'Gross savings (% of GDP)',
+      'GDP per capita, PPP (current international $)',
+      'GNI per capita, PPP (current international $)',
+      # Social development
+      'Life expectancy at birth, total (years)',
+      'Labor force participation rate, female (% of female population ages 15+)',
+      'Proportion of seats held by women in national parliaments (%)',
+      'Adolescent fertility rate (births per 1,000 women ages 15-19)',
+      'Mortality rate, under-5 (per 1,000 live births)',
+      'Maternal mortality ratio (modeled estimate, per 100,000 live births)',
+      'Poverty headcount ratio at $2.15 a day (2017 PPP) (% of population)',
+      'Government expenditure on education, total (% of GDP)',
+      # Climate and enviroment
+      'Access to electricity (% of population)',
+      'CO2 emissions (metric tons per capita)',
+      'Electric power consumption (kWh per capita)',
+      'Renewable energy consumption (% of total final energy consumption)',
+      # Demography
+      'Population growth (annual %)',
+      'Rural population (% of total population)',
+      'Urban population (% of total population)'
+    ),
+    indicator = c(
+      # Economic indicators
+      'FP.CPI.TOTL.ZG',
+      'FR.INR.RINR',
+      'SL.UEM.TOTL.ZS',
+      'NE.GDI.TOTL.ZS',
+      'NY.GNS.ICTR.ZS',
+      'NY.GDP.PCAP.PP.CD',
+      'NY.GNP.PCAP.PP.CD',
+      # Social development
+      'SP.DYN.LE00.IN',
+      'SL.TLF.CACT.FE.ZS',
+      'SG.GEN.PARL.ZS',
+      'SP.ADO.TFRT',
+      'SH.DYN.MORT',
+      'SH.STA.MMRT',
+      'SI.POV.DDAY',
+      'SE.XPD.TOTL.GD.ZS',
+      # Climate and enviroment
+      'EG.ELC.ACCS.ZS',
+      'EN.ATM.CO2E.PC',
+      'EG.USE.ELEC.KH.PC',
+      'EG.FEC.RNEW.ZS',
+      # Demography
+      'SP.POP.GROW',
+      'SP.RUR.TOTL.ZS',
+      'SP.URB.TOTL.IN.ZS'
+    ),
+    dashboard = c(
+      rep('Economic indicators', 7),
+      rep('Social development', 8),
+      rep('Climate and enviroment', 4),
+      rep('Demography', 3)
+    )
+  )
+```
 
+#### Countries
+
+```{r}
+brics <- c('BR', 'RU', 'IN', 'CN', 'ZA')
+```
+
+#### World Bank Development Indicators
+
+```{r}
+raw_data <- 
+  WDI(
+    country = brics,
+    indicator = indicators$indicator,
+    start = 1960,
+    end = 2025,
+    language = 'en'
+) |> 
+  as_tibble()
+```
+
+```{r}
+raw_data |> write_csv(here::here('data', 'raw_data_wdi.csv'))
 ```
