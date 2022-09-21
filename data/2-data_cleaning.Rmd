@@ -1,7 +1,7 @@
 # Data cleaning
 
 ```{r}
-pacman::p_load(tidyverse, here)
+pacman::p_load(tidyverse, tidymodels, here)
 ```
 
 #### Import raw datasets
@@ -11,5 +11,48 @@ import <- function(dir, path) {read_csv(here('data', dir, path))}
 
 wdi_raw <- import('raw', 'data_wdi.csv')
 un_raw <- import('raw', 'data_un.csv')
+indicators <- import('clean', 'indicators.csv')
 brics <- import('clean', 'brics.csv')
 ```
+
+```{r}
+missing <- function(data) {
+  data |> 
+  summarise(
+    across(
+      .cols = everything(),
+      .fns = ~ sum(is.na(.))
+    )
+  ) |> 
+  print(
+    n = Inf,
+    width = Inf
+  )
+}
+
+# How many missing values are?
+wdi_raw |> 
+  filter(year > 1999 & year < 2021) |> 
+  group_by(country) |> 
+  missing()
+```
+
+```{r}
+wdi <- 
+  wdi_raw |> 
+  filter(year > 1999 & year < 2021) |> 
+  write_csv(here('data', 'clean', 'wdi.csv'))
+```
+
+```{r}
+rec <- 
+  recipe(
+    year ~ .,
+    data = wdi
+  ) |> 
+  step_impute_knn(all_predictors(), neighbors = 3)
+
+rec |> prep() |> juice() |> group_by(country) |> missing()
+```
+
+\
