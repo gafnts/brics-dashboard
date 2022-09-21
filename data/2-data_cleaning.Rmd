@@ -1,48 +1,74 @@
 # Data cleaning
 
 ```{r}
-pacman::p_load(tidyverse, tidymodels, here)
+pacman::p_load(tidyverse, tidymodels, here, arrow)
+reticulate::use_condaenv('ml39')
 ```
 
 #### Import raw datasets
 
 ```{r}
-import <- function(dir, path) {read_csv(here('data', dir, path))}
+import <- function(path) read_csv(here('data', 'raw', path))
 
-wdi_raw <- import('raw', 'data_wdi.csv')
-un_raw <- import('raw', 'data_un.csv')
-indicators <- import('clean', 'indicators.csv')
-brics <- import('clean', 'brics.csv')
+indicators_raw <- import('indicators.csv')
+wdi_raw <- import('data_wdi.csv')
+un_raw <- import('data_un.csv')
+brics_raw <- import('brics.csv')
 ```
 
+### Indicators
+
 ```{r}
-missing <- function(data) {
-  data |> 
-  summarise(
-    across(
-      .cols = everything(),
-      .fns = ~ sum(is.na(.))
+indicators <- 
+  indicators_raw |> 
+  rename(original_name = 'name') |> 
+  mutate(
+    name = str_replace(original_name, "\\s*\\([^\\)]+\\)", "") |> 
+      str_replace("\\,.*", "") |> 
+      snakecase::to_any_case()
+  ) |> 
+  select(name, indicator, dashboard, original_name) |> 
+  bind_rows(
+    tibble(
+      name = un_raw |> select(!1:2) |> colnames(),
+      indicator = un_raw |> select(!1:2) |> colnames(),
+      dashboard = rep('Demography', 4),
+      original_name = un_raw |> select(!1:2) |> colnames()
     )
   ) |> 
-  print(
-    n = Inf,
-    width = Inf
-  )
-}
+  write_feather(here('data', 'clean', 'indicators.feather'))
+```
 
-# How many missing values are?
-wdi_raw |> 
-  filter(year > 1999 & year < 2021) |> 
-  group_by(country) |> 
-  missing()
+### World development indicators
+
+```{r}
+missing <- 
+  function(data) {
+    data |> 
+    summarise(
+      across(
+        .cols = everything(),
+        .fns = ~ sum(is.na(.))
+      )
+    ) |> 
+    print(
+      n = Inf,
+      width = Inf
+    )
+}
 ```
 
 ```{r}
 wdi <- 
   wdi_raw |> 
-  filter(year > 1999 & year < 2021) |> 
-  write_csv(here('data', 'clean', 'wdi.csv'))
+  filter(year >= 2000 & year <= 2020)
+
+wdi |> 
+  group_by(country) |> 
+  missing()
 ```
+
+#### Tidy impute
 
 ```{r}
 rec <- 
@@ -52,7 +78,82 @@ rec <-
   ) |> 
   step_impute_knn(all_predictors(), neighbors = 3)
 
-rec |> prep() |> juice() |> group_by(country) |> missing()
+wdi_rec <- 
+  rec |> 
+  prep() |> 
+  juice() |> 
+  select(iso2c, country, year, everything())
+
+wdi_rec |> group_by(country) |> missing()
 ```
 
-\
+#### Renaming variables
+
+```{r}
+new_names <- indicators |> slice(1:22) |> pull(name)
+
+wdi <- 
+  wdi_rec |> 
+  select(4:25) |> 
+  set_names(new_names) |> 
+  bind_cols(
+    wdi_rec |> select(iso2c, year)
+  ) |> 
+  select(iso2c, year, everything()) |> 
+  write_feather(here('data', 'clean', 'wdi.feather'))
+```
+
+#### Sklearn impute
+
+```{python}
+py_wdi = r.wdi
+incomplete_rows = py_wdi[py_wdi.isnull().any(axis=1)]
+incomplete_rows
+```
+
+```{r}
+library(reticulate)
+
+py$incomplete_rows |> 
+  as_tibble() |> 
+  print(
+    n = Inf,
+    width = Inf
+  )
+```
+
+```{python}
+import pandas as pd
+from sklearn.impute import KNNImputer
+
+imputer = KNNImputer(n_neighbors=3)
+py_wdi_num = py_wdi.drop(['iso2c', 'country'], axis=1)
+
+py_wdi_impute = pd.DataFrame(
+  imputer.fit_transform(py_wdi_num), 
+  columns = py_wdi_num.columns
+)
+  
+py_wdi_impute
+```
+
+```{python}
+py_wdi_impute.isna().any()
+```
+
+### UN World Population Prospects
+
+```{r}
+un_raw |> 
+  write_feather(here('data', 'clean', 'un.feather'))
+```
+
+### Countries
+
+```{r}
+brics_raw |> 
+  mutate(
+    flag_country = paste(flag, country_name)
+  ) |> 
+  write_feather(here('data', 'clean', 'brics.feather'))
+```
