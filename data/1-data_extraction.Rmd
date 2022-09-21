@@ -75,7 +75,7 @@ indicators <-
 ```
 
 ```{r}
-indicators |> write_csv(here('data', 'clean', 'indicators.csv'))
+indicators |> write_csv(here('data', 'raw', 'indicators.csv'))
 ```
 
 #### Countries
@@ -93,12 +93,12 @@ brics <-
         iso2c, 
         flag = unicode.symbol
         ),
-    by = "iso2c"
+    by = 'iso2c'
   )
 ```
 
 ```{r}
-brics |> write_csv(here('data', 'clean', 'brics.csv'))
+brics |> write_csv(here('data', 'raw', 'brics.csv'))
 ```
 
 #### World Bank Development Indicators
