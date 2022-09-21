@@ -1,7 +1,7 @@
 # Data extraction
 
 ```{r}
-pacman::p_load(tidyverse, here, WDI, janitor)
+pacman::p_load(tidyverse, here, WDI)
 ```
 
 #### Indicators
@@ -124,33 +124,28 @@ raw_indicators |> write_csv(here('data', 'raw', 'data_wdi.csv'))
 <https://population.un.org/wpp/Download/Standard/MostUsed/>
 
 ```{r}
-population_prospects <- 
-  readxl::read_excel(
-    here('data', 'raw', 'population_prospects.xlsx'),
-    skip = 15
-  ) |> 
-  row_to_names(1) |> 
-  clean_names()
+demographic_indicators <- 
+  read_csv(
+    here('data', 'raw', 'demographic_indicators.csv')
+  )
 ```
 
 ```{r}
 raw_prospects <- 
   brics |> 
   left_join(
-    y = population_prospects,
-    by = c('iso2c' = 'iso2_alpha_code')
+    y = demographic_indicators,
+    by = c('iso2c' = 'ISO2_code')
   ) |> 
   select(
     iso2c,
-    year,
-    total_population = 'total_population_as_of_1_january_thousands',
-    population_change = 'population_change_thousands',
-    births_thousands,
-    deaths_thousands = 'total_deaths_thousands'
+    year = 'Time',
+    total_population = 'TPopulation1Jan',
+    population_change = 'PopGrowthRate',
+    births = 'Births',
+    deaths = 'Deaths'
   ) |> 
-  mutate(
-    across(!iso2c, as.numeric)
-  )
+  drop_na()
 ```
 
 ```{r}
