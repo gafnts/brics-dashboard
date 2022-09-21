@@ -1,0 +1,15 @@
+# Data cleaning
+
+```{r}
+pacman::p_load(tidyverse, here)
+```
+
+#### Import raw datasets
+
+```{r}
+import <- function(dir, path) {read_csv(here('data', dir, path))}
+
+wdi_raw <- import('raw', 'data_wdi.csv')
+un_raw <- import('raw', 'data_un.csv')
+brics <- import('clean', 'brics.csv')
+```
