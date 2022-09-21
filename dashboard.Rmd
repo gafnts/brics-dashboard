@@ -1,0 +1,14 @@
+---
+title: 'BRICS'
+output: 
+  flexdashboard::flex_dashboard:
+    orientation: columns
+    vertical_layout: fill
+runtime: shiny
+---
+
+```{r setup, include=FALSE}
+pacman::p_load(
+  flexdashboard, shiny, tidyverse, here
+)
+```
