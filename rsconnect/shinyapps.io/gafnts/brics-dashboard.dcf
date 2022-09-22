@@ -1,0 +1,11 @@
+name: brics-dashboard
+title:
+username:
+account: gafnts
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 7094588
+bundleId: 6329040
+url: https://gafnts.shinyapps.io/brics-dashboard/
+when: 1663880394.36384
+lastSyncTime: 1663880394.36386
