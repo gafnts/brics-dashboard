@@ -35,7 +35,12 @@ econ_ind <-
 ```
 
 ```{r functions}
-
+value_caption <- function(name) {
+  htmltools::HTML(
+    glue::glue("<p style = 'font-size : 15.5px;'> {name} </p><br/> 
+                 <p style = 'font-size : 10px;'>* 2010 - 2020 average</p>")
+  )
+}
 ```
 
 
@@ -63,7 +68,7 @@ selectInput(
 Economic indicators
 =======================================================================
 
-Row
+Row: Title
 -----------------------------------------------------------------------
 
 ### {.value-box}
@@ -90,7 +95,7 @@ renderValueBox({
 })
 ```
 
-Row
+Row: Value boxes
 -----------------------------------------------------------------------
 
 ### Inflation {.value-box}
@@ -105,13 +110,14 @@ renderValueBox({
   
   valueBox(
     value = inf,
+    caption = value_caption('Inflation *'),
     icon = NULL,
     color = 'warning'
   )
 })
 ```
 
-### Real interest rate {.value-box}
+### Real interest rate * {.value-box}
 
 ```{r}
 renderValueBox({
@@ -123,13 +129,14 @@ renderValueBox({
   
   valueBox(
     value = i,
+    #caption = value_caption('Real interest rate'),
     icon = NULL,
     color = 'warning'
   )
 })
 ```
 
-### Unemployment {.value-box}
+### Unemployment * {.value-box}
 
 ```{r}
 renderValueBox({
@@ -141,6 +148,7 @@ renderValueBox({
   
   valueBox(
     value = unem,
+    #caption = value_caption('Unemployment'),
     icon = NULL,
     color = 'warning'
   )
@@ -165,13 +173,14 @@ renderValueBox({
   
   valueBox(
     value = inf,
+    caption = value_caption('Inflation *'),
     icon = NULL,
     color = 'success'
   )
 })
 ```
 
-### Real interest rate {.value-box}
+### Real interest rate * {.value-box}
 
 ```{r}
 renderValueBox({
@@ -189,13 +198,14 @@ renderValueBox({
   
   valueBox(
     value = i,
+    #caption = value_caption('Real interest rate'),
     icon = NULL,
     color = 'success'
   )
 })
 ```
 
-### Unemployment {.value-box}
+### Unemployment * {.value-box}
 
 ```{r}
 renderValueBox({
@@ -213,6 +223,7 @@ renderValueBox({
   
   valueBox(
     value = unem,
+    #caption = value_caption('Unemployment'),
     icon = NULL,
     color = 'success'
   )
@@ -222,7 +233,21 @@ renderValueBox({
 Row
 -----------------------------------------------------------------------
 
-### `r renderText({input$econ_indicators  |> as_tibble() |> left_join(indicators, by = c('value' = 'display')) |> pull(original_name)})`
+```{css}
+.shiny-text-output {  /* chart_title  */
+   font-size: 20px;
+   font-weight: bold;
+```
+
+```{r}
+econ_plot_title <- 
+  shiny::renderText({input$econ_indicators |> 
+      as_tibble() |> 
+      left_join(indicators, by = c('value' = 'display')) |> 
+      pull(original_name)})
+```
+
+### `r econ_plot_title`
 
 ```{r}
 renderEcharts4r({
@@ -243,7 +268,7 @@ renderEcharts4r({
   })
 ```
 
-### `r renderText({input$econ_indicators  |> as_tibble() |> left_join(indicators, by = c('value' = 'display')) |> pull(original_name)})`
+### `r econ_plot_title` 
 
 ```{r}
 renderEcharts4r({
