@@ -2,7 +2,10 @@
 title: 'How far ahead is India?'
 output: 
   flexdashboard::flex_dashboard:
-    orientation: columns
+    theme: 
+      version: 4
+      bootswatch: lux
+    orientation: rows
     social: menu
     source_code: https://github.com/gafnts/brics-dashboard
     vertical_layout: fill
@@ -22,7 +25,7 @@ indicators <- import('indicators.feather')
 wdi <- import('wdi.feather')
 un <- import('un.feather')
 
-countries <- brics |> filter(iso2c != 'IN') |> pull(iso2c)
+countries <- brics |> filter(iso2c != 'IN') |> pull(flag_country)
 ```
 
 Sidebar {.sidebar}
@@ -31,7 +34,7 @@ Sidebar {.sidebar}
 ```{r}
 selectInput(
   inputId="countries", 
-  label = "Select another country:", 
+  label = 'Compare it with:', 
   choices = countries, 
   selected = countries[1]
 )
@@ -40,23 +43,175 @@ selectInput(
 Economic indicators
 =======================================================================
 
-Column
+Row
 -----------------------------------------------------------------------
 
-### Inflation, consumer prices (ten year % average) {.value-box}
+### {.value-box}
+
+```{r}
+renderValueBox({
+  valueBox(
+    value = brics |> filter(iso2c == 'IN') |> pull(flag_country),
+    icon = NULL,
+    color = 'warning'
+  )
+})
+```
+
+### {.value-box}
+
+```{r}
+renderValueBox({
+  valueBox(
+    value = input$countries,
+    icon = NULL,
+    color = 'success'
+  )
+})
+```
+
+Row
+-----------------------------------------------------------------------
+
+### Inflation {.value-box}
 
 ```{r}
 renderValueBox({
   inf <- wdi |> 
-    filter(iso2c == input$countries) |> 
+    filter(iso2c == 'IN') |> 
     filter(year >= 2010 & year <= 2020) |> 
-    summarise(mean_inflation = round(mean(inflation), 2))
+    summarise(mean_inflation = round(mean(inflation), 2)) |> 
+    mutate(mean_inflation = paste0(mean_inflation, '%'))
+  
   valueBox(
     value = inf,
-    icon = "fa-area-chart",
+    icon = NULL,
     color = 'warning'
   )
 })
+```
+
+### Real interest rate {.value-box}
+
+```{r}
+renderValueBox({
+  i <- wdi |> 
+    filter(iso2c == 'IN') |> 
+    filter(year >= 2010 & year <= 2020) |> 
+    summarise(mean_interest_rate = round(mean(real_interest_rate), 2)) |> 
+    mutate(mean_interest_rate = paste0(mean_interest_rate, '%'))
+  
+  valueBox(
+    value = i,
+    icon = NULL,
+    color = 'warning'
+  )
+})
+```
+
+### Unemployment {.value-box}
+
+```{r}
+renderValueBox({
+  unem <- wdi |> 
+    filter(iso2c == 'IN') |> 
+    filter(year >= 2010 & year <= 2020) |> 
+    summarise(mean_unemployment = round(mean(unemployment), 2)) |> 
+    mutate(mean_unemployment = paste0(mean_unemployment, '%'))
+  
+  valueBox(
+    value = unem,
+    icon = NULL,
+    color = 'warning'
+  )
+})
+```
+
+### Inflation {.value-box}
+
+```{r}
+renderValueBox({
+  filter <- 
+    input$countries |> 
+    as_tibble() |> 
+    left_join(brics, by = c('value' = 'flag_country')) |> 
+    pull(iso2c)
+  
+  inf <- wdi |> 
+    filter(iso2c == filter) |> 
+    filter(year >= 2010 & year <= 2020) |> 
+    summarise(mean_inflation = round(mean(inflation), 2)) |> 
+    mutate(mean_inflation = paste0(mean_inflation, '%'))
+  
+  valueBox(
+    value = inf,
+    icon = NULL,
+    color = 'success'
+  )
+})
+```
+
+### Real interest rate {.value-box}
+
+```{r}
+renderValueBox({
+  filter <- 
+    input$countries |> 
+    as_tibble() |> 
+    left_join(brics, by = c('value' = 'flag_country')) |> 
+    pull(iso2c)
+  
+  i <- wdi |> 
+    filter(iso2c == filter) |> 
+    filter(year >= 2010 & year <= 2020) |> 
+    summarise(mean_interest_rate = round(mean(real_interest_rate), 2)) |> 
+    mutate(mean_interest_rate = paste0(mean_interest_rate, '%'))
+  
+  valueBox(
+    value = i,
+    icon = NULL,
+    color = 'success'
+  )
+})
+```
+
+### Unemployment {.value-box}
+
+```{r}
+renderValueBox({
+  filter <- 
+    input$countries |> 
+    as_tibble() |> 
+    left_join(brics, by = c('value' = 'flag_country')) |> 
+    pull(iso2c)
+  
+  unem <- wdi |> 
+    filter(iso2c == filter) |> 
+    filter(year >= 2010 & year <= 2020) |> 
+    summarise(mean_unemployment = round(mean(unemployment), 2)) |> 
+    mutate(mean_unemployment = paste0(mean_unemployment, '%'))
+  
+  valueBox(
+    value = unem,
+    icon = NULL,
+    color = 'success'
+  )
+})
+```
+
+Row
+-----------------------------------------------------------------------
+
+### Just a title
+
+```{r}
+
+```
+
+### Just a title
+
+```{r}
+
 ```
 
 Social development
