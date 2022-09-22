@@ -1,14 +1,63 @@
 ---
-title: 'BRICS'
+title: 'How far ahead is India?'
 output: 
   flexdashboard::flex_dashboard:
     orientation: columns
+    social: menu
+    source_code: https://github.com/gafnts/brics-dashboard
     vertical_layout: fill
 runtime: shiny
 ---
 
 ```{r setup, include=FALSE}
 pacman::p_load(
-  flexdashboard, shiny, tidyverse, here
+  flexdashboard, shiny, dplyr, arrow, 
+  here, echarts4r, shinyWidgets
+)
+
+import <- function(path) read_feather(here('data', 'clean', path))
+
+brics <- import('brics.feather')
+indicators <- import('indicators.feather')
+wdi <- import('wdi.feather')
+un <- import('un.feather')
+
+countries <- brics |> filter(iso2c != 'IN') |> pull(iso2c)
+```
+
+Sidebar {.sidebar}
+=====================================
+
+```{r}
+selectInput(
+  inputId="countries", 
+  label = "Select another country:", 
+  choices = countries, 
+  selected = countries[1]
 )
 ```
+
+Economic indicators
+=======================================================================
+
+Column
+-----------------------------------------------------------------------
+
+### Inflation, consumer prices (ten year % average) {.value-box}
+
+```{r}
+renderValueBox({
+  inf <- wdi |> 
+    filter(iso2c == input$countries) |> 
+    filter(year >= 2010 & year <= 2020) |> 
+    summarise(mean_inflation = round(mean(inflation), 2))
+  valueBox(
+    value = inf,
+    icon = "fa-area-chart",
+    color = 'warning'
+  )
+})
+```
+
+Social development
+=======================================================================
