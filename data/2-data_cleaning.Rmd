@@ -19,18 +19,28 @@ brics_raw <- import('brics.csv')
 ### Indicators
 
 ```{r}
+remove_unwanted <- function(var) {
+  str_replace(var, "\\s*\\([^\\)]+\\)", "") |> 
+      str_replace("\\,.*", "") 
+}
+
 indicators <- 
   indicators_raw |> 
   rename(original_name = 'name') |> 
   mutate(
-    name = str_replace(original_name, "\\s*\\([^\\)]+\\)", "") |> 
-      str_replace("\\,.*", "") |> 
-      snakecase::to_any_case()
+    name = remove_unwanted(original_name) |> 
+      snakecase::to_any_case(),
+    display = remove_unwanted(original_name)
   ) |> 
-  select(name, indicator, dashboard, original_name) |> 
+  select(name, display, indicator, dashboard, original_name) |> 
   bind_rows(
     tibble(
       name = un_raw |> select(!1:2) |> colnames(),
+      display = un_raw |> 
+        select(!1:2) |> 
+        colnames() |> 
+        str_replace('_', ' ') |> 
+        str_to_title(),
       indicator = un_raw |> select(!1:2) |> colnames(),
       dashboard = rep('Demography', 4),
       original_name = un_raw |> select(!1:2) |> colnames()

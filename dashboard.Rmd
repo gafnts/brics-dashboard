@@ -30,11 +30,16 @@ countries <- brics |> filter(iso2c != 'IN') |> pull(flag_country)
 econ_ind <- 
   indicators |> 
   filter(dashboard == 'Economic indicators') |> 
-  slice(4:7) |> 
-  pull(original_name)
+  slice(6, 7, 4, 5) |> 
+  pull(display)
 ```
 
-Sidebar {.sidebar}
+```{r functions}
+
+```
+
+
+Sidebar {.sidebar data-width=260}
 =====================================
 
 ```{r}
@@ -217,14 +222,14 @@ renderValueBox({
 Row
 -----------------------------------------------------------------------
 
-### `r renderText({input$econ_indicators})`
+### `r renderText({input$econ_indicators  |> as_tibble() |> left_join(indicators, by = c('value' = 'display')) |> pull(original_name)})`
 
 ```{r}
 renderEcharts4r({
    filter_ind <- 
       input$econ_indicators |> 
       as_tibble() |> 
-      left_join(indicators, by = c('value' = 'original_name')) |> 
+      left_join(indicators, by = c('value' = 'display')) |> 
       pull(name)
   
     wdi |> 
@@ -238,7 +243,7 @@ renderEcharts4r({
   })
 ```
 
-### `r renderText({input$econ_indicators})`
+### `r renderText({input$econ_indicators  |> as_tibble() |> left_join(indicators, by = c('value' = 'display')) |> pull(original_name)})`
 
 ```{r}
 renderEcharts4r({
@@ -251,7 +256,7 @@ renderEcharts4r({
     filter_ind <- 
       input$econ_indicators |> 
       as_tibble() |> 
-      left_join(indicators, by = c('value' = 'original_name')) |> 
+      left_join(indicators, by = c('value' = 'display')) |> 
       pull(name)
     
     wdi |> 
