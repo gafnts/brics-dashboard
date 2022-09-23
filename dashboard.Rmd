@@ -40,22 +40,64 @@ value_caption <- function(name) {
                  <p style = 'font-size : 10px;'>* 2010 - 2020 average</p>")
   )
 }
+
+ten_year_mean <- function(country, var) {
+    wdi |> 
+    filter(iso2c == {{country}}) |> 
+    filter(year >= 2010 & year <= 2020) |> 
+    summarise(mean = round(mean({{var}}), 2)) |> 
+    mutate(mean = paste0(mean, '%'))
+}
+
+country_filter <- function(...) {
+    input$countries |> 
+    as_tibble() |> 
+    left_join(brics, by = c('value' = 'flag_country')) |> 
+    pull(iso2c)
+}
+
+indicator_filter <- function(input, key, yank) {
+    input |> 
+    as_tibble() |> 
+    left_join(indicators, by = c('value' = 'display')) |> 
+    pull({{yank}})
+}
+
+bar_chart <- function(data, country, indicator, color) {
+    data |> 
+    filter(iso2c == {{country}}) |> 
+    select(year, ` ` = {{indicator}}) |> 
+    mutate(year = as_date(paste(year, '01', '01', sep = '-'))) |> 
+    e_charts(year) |> 
+    e_bar(` `, color = color) |> 
+    e_legend(FALSE) |> 
+    e_tooltip(trigger = "axis") 
+}
 ```
+
+```{r params}
+india_color <- '#4B4B4B'
+country_color <- '#85D09C'
+```
+
 
 ```{css}
 h4, .h4 {
-    font-size: 16.5px;
-    font-weight: 600;
+  font-size: 16.5px;
+  font-weight: 600;
 }
 
 .shiny-text-output {  /* chart_title  */
-   font-size: 20px;
-   font-weight: bold;
+  font-size: 20px;
+  font-weight: bold;
 }
 ```
 
+Economic indicators
+=======================================================================
+
 Sidebar {.sidebar data-width=265}
-=====================================
+-------------------------------------
 
 #### India's prospects
 <br>
@@ -76,16 +118,11 @@ selectInput(
 )
 ```
 
-<br>
-
 This dashboard will let you explore how India compares to the other [BRICS](https://en.wikipedia.org/wiki/BRICS) economies as measured by key economic, social and demographic indicators in an easy-to-use interface. <br><br><br>
 
 <font size = '1px'> Data: [World Development Indicators](https://data.worldbank.org/)
 <br> Forecasts: [World Population Prospects](https://population.un.org/wpp/)
-<br><br><br> Disclaimer: Some missing data has been imputed using KNN. </font>
-
-Economic indicators
-=======================================================================
+<br><br> Disclaimer: Some missing data has been imputed using KNN. </font>
 
 Row: Title
 -----------------------------------------------------------------------
@@ -121,11 +158,7 @@ Row: Value boxes
 
 ```{r}
 renderValueBox({
-  inf <- wdi |> 
-    filter(iso2c == 'IN') |> 
-    filter(year >= 2010 & year <= 2020) |> 
-    summarise(mean_inflation = round(mean(inflation), 2)) |> 
-    mutate(mean_inflation = paste0(mean_inflation, '%'))
+  inf <- ten_year_mean('IN', inflation)
   
   valueBox(
     value = inf,
@@ -140,15 +173,10 @@ renderValueBox({
 
 ```{r}
 renderValueBox({
-  i <- wdi |> 
-    filter(iso2c == 'IN') |> 
-    filter(year >= 2010 & year <= 2020) |> 
-    summarise(mean_interest_rate = round(mean(real_interest_rate), 2)) |> 
-    mutate(mean_interest_rate = paste0(mean_interest_rate, '%'))
+  i <- ten_year_mean('IN', real_interest_rate)
   
   valueBox(
     value = i,
-    #caption = value_caption('Real interest rate'),
     icon = NULL,
     color = 'warning'
   )
@@ -159,15 +187,10 @@ renderValueBox({
 
 ```{r}
 renderValueBox({
-  unem <- wdi |> 
-    filter(iso2c == 'IN') |> 
-    filter(year >= 2010 & year <= 2020) |> 
-    summarise(mean_unemployment = round(mean(unemployment), 2)) |> 
-    mutate(mean_unemployment = paste0(mean_unemployment, '%'))
+  unem <- ten_year_mean('IN', unemployment)
   
   valueBox(
     value = unem,
-    #caption = value_caption('Unemployment'),
     icon = NULL,
     color = 'warning'
   )
@@ -178,17 +201,8 @@ renderValueBox({
 
 ```{r}
 renderValueBox({
-  filter <- 
-    input$countries |> 
-    as_tibble() |> 
-    left_join(brics, by = c('value' = 'flag_country')) |> 
-    pull(iso2c)
-  
-  inf <- wdi |> 
-    filter(iso2c == filter) |> 
-    filter(year >= 2010 & year <= 2020) |> 
-    summarise(mean_inflation = round(mean(inflation), 2)) |> 
-    mutate(mean_inflation = paste0(mean_inflation, '%'))
+  country <- country_filter()
+  inf <- ten_year_mean(country, inflation)
   
   valueBox(
     value = inf,
@@ -203,21 +217,11 @@ renderValueBox({
 
 ```{r}
 renderValueBox({
-  filter <- 
-    input$countries |> 
-    as_tibble() |> 
-    left_join(brics, by = c('value' = 'flag_country')) |> 
-    pull(iso2c)
-  
-  i <- wdi |> 
-    filter(iso2c == filter) |> 
-    filter(year >= 2010 & year <= 2020) |> 
-    summarise(mean_interest_rate = round(mean(real_interest_rate), 2)) |> 
-    mutate(mean_interest_rate = paste0(mean_interest_rate, '%'))
+  country <- country_filter()
+  i <- ten_year_mean(country, real_interest_rate)
   
   valueBox(
     value = i,
-    #caption = value_caption('Real interest rate'),
     icon = NULL,
     color = 'success'
   )
@@ -228,21 +232,11 @@ renderValueBox({
 
 ```{r}
 renderValueBox({
-  filter <- 
-    input$countries |> 
-    as_tibble() |> 
-    left_join(brics, by = c('value' = 'flag_country')) |> 
-    pull(iso2c)
-  
-  unem <- wdi |> 
-    filter(iso2c == filter) |> 
-    filter(year >= 2010 & year <= 2020) |> 
-    summarise(mean_unemployment = round(mean(unemployment), 2)) |> 
-    mutate(mean_unemployment = paste0(mean_unemployment, '%'))
+  country <- country_filter()
+  unem <- ten_year_mean(country, unemployment)
   
   valueBox(
     value = unem,
-    #caption = value_caption('Unemployment'),
     icon = NULL,
     color = 'success'
   )
@@ -254,30 +248,27 @@ Row
 
 ```{r}
 econ_plot_title <- 
-  shiny::renderText({input$econ_indicators |> 
-      as_tibble() |> 
-      left_join(indicators, by = c('value' = 'display')) |> 
-      pull(original_name)})
+  shiny::renderText({indicator_filter(
+      input = input$econ_indicators, 
+      yank = original_name
+      )})
 ```
 
 ### `r econ_plot_title`
 
 ```{r}
 renderEcharts4r({
-   filter_ind <- 
-      input$econ_indicators |> 
-      as_tibble() |> 
-      left_join(indicators, by = c('value' = 'display')) |> 
-      pull(name)
+   indicator <- indicator_filter(
+      input = input$econ_indicators, 
+      yank = name
+      )
   
-    wdi |> 
-      filter(iso2c == 'IN') |> 
-      select(year, ` ` = filter_ind) |> 
-      mutate(year = as_date(paste(year, '01', '01', sep = '-'))) |> 
-      e_charts(year) |> 
-      e_bar(` `, color = '#4B4B4B') |> 
-      e_legend(FALSE) |> 
-      e_tooltip(trigger = "axis") 
+    bar_chart(
+      data = wdi,
+      country = 'IN',
+      indicator = indicator,
+      color = india_color
+    )
   })
 ```
 
@@ -285,31 +276,82 @@ renderEcharts4r({
 
 ```{r}
 renderEcharts4r({
-    filter <- 
-      input$countries |> 
-      as_tibble() |> 
-      left_join(brics, by = c('value' = 'flag_country')) |> 
-      pull(iso2c)
+    country <- country_filter('flag_country')
     
-    filter_ind <- 
-      input$econ_indicators |> 
-      as_tibble() |> 
-      left_join(indicators, by = c('value' = 'display')) |> 
-      pull(name)
+    indicator <- indicator_filter(
+      input = input$econ_indicators, 
+      yank = name
+      )
     
-    wdi |> 
-      filter(iso2c == filter) |> 
-      select(year, ` ` = filter_ind) |> 
-      mutate(year = as_date(paste(year, '01', '01', sep = '-'))) |> 
-      e_charts(year) |> 
-      e_bar(` `, color = '#85D09C') |> 
-      e_legend(FALSE) |> 
-      e_tooltip(trigger = "axis") 
+    bar_chart(
+      data = wdi,
+      country = country,
+      indicator = indicator,
+      color = country_color
+    )
   })
 ```
 
 Social development
 =======================================================================
+
+sidebar_social {.sidebar data-width=265}
+-------------------------------------
+
+#### India's prospects
+<br>
+
+```{r}
+selectInput(
+  inputId = 'social_countries',
+  label = 'Compare India with:', 
+  choices = countries, 
+  selected = countries[1]
+)
+
+selectInput(
+  inputId = 'social_indicators',
+  label = 'Select an indicator:', 
+  choices = c('One', 'Two', 'Three', 'Four'), 
+  selected = 'One'
+)
+```
+
+This dashboard will let you explore how India compares to the other [BRICS](https://en.wikipedia.org/wiki/BRICS) economies as measured by key economic, social and demographic indicators in an easy-to-use interface. <br><br><br>
+
+<font size = '1px'> Data: [World Development Indicators](https://data.worldbank.org/)
+<br> Forecasts: [World Population Prospects](https://population.un.org/wpp/)
+<br><br> Disclaimer: Some missing data has been imputed using KNN. </font>
+
+Row: Title (Social)
+-----------------------------------------------------------------------
+
+### {.value-box}
+
+```{r}
+renderValueBox({
+  valueBox(
+    value = brics |> filter(iso2c == 'IN') |> pull(flag_country),
+    icon = NULL,
+    color = 'warning'
+  )
+})
+```
+
+### {.value-box}
+
+```{r}
+renderValueBox({
+  valueBox(
+    value = input$social_countries,
+    icon = NULL,
+    color = 'success'
+  )
+})
+```
+
+Row: Value boxes
+-----------------------------------------------------------------------
 
 Climate change
 =======================================================================
