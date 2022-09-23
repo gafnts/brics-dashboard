@@ -50,6 +50,7 @@ indicators <-
 
 ```{r}
 indicators |> 
+  # Display
   mutate(
     display = replace(
       display,
@@ -67,6 +68,29 @@ indicators |>
       display,
       display == 'Proportion of seats held by women in national parliaments',
       'Women in national parliaments'),
+  ) |> 
+  # Original name
+  mutate(
+    original_name = replace(
+      original_name,
+      original_name == 'Poverty headcount ratio at $2.15 a day (2017 PPP) (% of population)',
+      'Poverty headcount ratio ($2.15 a day) (% of population)'
+    ),
+    original_name = replace(
+      original_name,
+      original_name == 'Government expenditure on education, total (% of GDP)',
+      'Government expenditure on education (% of GDP)'
+    ),
+    original_name = replace(
+      original_name,
+      original_name == 'Adolescent fertility rate (births per 1,000 women ages 15-19)',
+      'Adolescent fertility rate (births per 1,000 women) (ages 15-19)'
+    ),
+    original_name = replace(
+      original_name,
+      original_name == 'Labor force participation rate, female (% of female population ages 15+)',
+      'Labor force participation rate (% of female population)'
+    )
   ) |> 
   write_feather(here('data', 'clean', 'indicators.feather'))
 ```
