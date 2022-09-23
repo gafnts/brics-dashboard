@@ -14,7 +14,7 @@ runtime: shiny
 
 ```{r setup, include=FALSE}
 pacman::p_load(
-  flexdashboard, shiny, dplyr, arrow, here, stringr, lubridate, echarts4r
+  flexdashboard, shiny, dplyr, arrow, here, stringr, lubridate, echarts4r, bslib
 )
 
 import <- function(path) read_feather(here('data', 'clean', path))
@@ -90,10 +90,10 @@ bar_chart <- function(data = wdi, country, indicator, color, forecast = FALSE) {
 }
 ```
 
-```{r params}
+```{r colors}
 india_color <- '#4B4B4B'
-country_color <- '#E38682'
-forecast_color <- '#FFCC00'
+country_color <- '#FFCF04'
+forecast_color <- '#C1C4C7'
 ```
 
 
@@ -160,7 +160,7 @@ renderValueBox({
   valueBox(
     value = input$countries,
     icon = NULL,
-    color = 'danger'
+    color = country_color
   )
 })
 ```
@@ -222,7 +222,7 @@ renderValueBox({
     value = inf,
     caption = value_caption('Inflation *'),
     icon = NULL,
-    color = 'danger'
+    color = country_color
   )
 })
 ```
@@ -237,7 +237,7 @@ renderValueBox({
   valueBox(
     value = i,
     icon = NULL,
-    color = 'danger'
+    color = country_color
   )
 })
 ```
@@ -252,7 +252,7 @@ renderValueBox({
   valueBox(
     value = unem,
     icon = NULL,
-    color = 'danger'
+    color = country_color
   )
 })
 ```
@@ -356,7 +356,7 @@ renderValueBox({
   valueBox(
     value = input$countries,
     icon = NULL,
-    color = 'danger'
+    color = country_color
   )
 })
 ```
@@ -432,7 +432,7 @@ renderValueBox({
     caption = '* 2010 - 2020 average'
     ),
     icon = NULL,
-    color = 'danger'
+    color = country_color
   )
 })
 ```
@@ -451,7 +451,7 @@ renderValueBox({
     caption = '(per 1,000 live births)'
     ),
     icon = NULL,
-    color = 'danger'
+    color = country_color
   )
 })
 ```
@@ -470,7 +470,7 @@ renderValueBox({
     caption = '(births per 1,000 women)'
     ),
     icon = NULL,
-    color = 'danger'
+    color = country_color
   )
 })
 ```
@@ -588,7 +588,7 @@ renderValueBox({
   valueBox(
     value = input$countries,
     icon = NULL,
-    color = 'danger'
+    color = country_color
   )
 })
 ```
@@ -741,7 +741,7 @@ renderValueBox({
   valueBox(
     value = input$countries,
     icon = NULL,
-    color = 'danger'
+    color = country_color
   )
 })
 ```
@@ -817,7 +817,7 @@ renderValueBox({
     caption = '* 2010 - 2020 average'
     ),
     icon = NULL,
-    color = 'danger'
+    color = country_color
   )
 })
 ```
@@ -836,7 +836,7 @@ renderValueBox({
     caption = '(% of total population)'
     ),
     icon = NULL,
-    color = 'danger'
+    color = country_color
   )
 })
 ```
@@ -855,7 +855,7 @@ renderValueBox({
     caption = '(% of total population)'
     ),
     icon = NULL,
-    color = 'danger'
+    color = country_color
   )
 })
 ```
