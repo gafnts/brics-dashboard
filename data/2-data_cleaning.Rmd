@@ -43,7 +43,7 @@ indicators <-
         str_to_title(),
       indicator = un_raw |> select(!1:2) |> colnames(),
       dashboard = rep('Demography', 4),
-      original_name = un_raw |> select(!1:2) |> colnames()
+      original_name = display
     )
   )
 ```
@@ -218,6 +218,7 @@ py_wdi_impute.isna().any()
 
 ```{r}
 un_raw |> 
+  mutate(color = if_else(year %in% 1950:2022, 'observed', 'forecasted')) |> 
   write_feather(here('data', 'clean', 'un.feather'))
 ```
 
