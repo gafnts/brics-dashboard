@@ -14,7 +14,7 @@ runtime: shiny
 
 ```{r setup, include=FALSE}
 pacman::p_load(
-  flexdashboard, shiny, dplyr, arrow, here, echarts4r, lubridate
+  flexdashboard, shiny, dplyr, stringr, arrow, here, echarts4r, lubridate
 )
 
 import <- function(path) read_feather(here('data', 'clean', path))
@@ -28,25 +28,38 @@ countries <- brics |> filter(iso2c != 'IN') |> pull(flag_country)
 
 econ_ind <- 
   indicators |> 
-  filter(dashboard == 'Economic indicators') |> 
+  filter(str_detect(dashboard, 'Economic')) |> 
   slice(6, 7, 4, 5) |> 
+  pull(display)
+
+social_ind <- 
+  indicators |> 
+  filter(str_detect(dashboard, 'Social')) |> 
+  slice(7, 8, 4, 2) |>
   pull(display)
 ```
 
 ```{r functions}
-value_caption <- function(name) {
+value_caption <- function(name, caption = '* 2010 - 2020 average') {
   htmltools::HTML(
     glue::glue("<p style = 'font-size : 15.5px;'> {name} </p><br/> 
-                 <p style = 'font-size : 10px;'>* 2010 - 2020 average</p>")
+                 <p style = 'font-size : 10px;'> {caption} </p>")
   )
 }
 
-ten_year_mean <- function(country, var) {
-    wdi |> 
-    filter(iso2c == {{country}}) |> 
-    filter(year >= 2010 & year <= 2020) |> 
-    summarise(mean = round(mean({{var}}), 2)) |> 
-    mutate(mean = paste0(mean, '%'))
+ten_year_mean <- function(country, var, percent = TRUE) {
+    if (percent == TRUE) {
+      wdi |> 
+      filter(iso2c == {{country}}) |> 
+      filter(year >= 2010 & year <= 2020) |> 
+      summarise(mean = round(mean({{var}}), 2)) |> 
+      mutate(mean = paste0(mean, '%'))
+    } else {
+      wdi |> 
+      filter(iso2c == {{country}}) |> 
+      filter(year >= 2010 & year <= 2020) |> 
+      summarise(mean = round(mean({{var}}), 2))
+    }
 }
 
 country_filter <- function(...) {
@@ -56,7 +69,7 @@ country_filter <- function(...) {
     pull(iso2c)
 }
 
-indicator_filter <- function(input, key, yank) {
+indicator_filter <- function(input, yank) {
     input |> 
     as_tibble() |> 
     left_join(indicators, by = c('value' = 'display')) |> 
@@ -99,9 +112,6 @@ Economic indicators
 Sidebar {.sidebar data-width=265}
 -------------------------------------
 
-#### India's prospects
-<br>
-
 ```{r}
 selectInput(
   inputId = 'countries',
@@ -112,7 +122,7 @@ selectInput(
 
 selectInput(
   inputId = 'econ_indicators',
-  label = 'Select an indicator:', 
+  label = 'Select an economic indicator:', 
   choices = econ_ind, 
   selected = econ_ind[1]
 )
@@ -295,27 +305,20 @@ renderEcharts4r({
 Social development
 =======================================================================
 
-sidebar_social {.sidebar data-width=265}
+sidebar {.sidebar data-width=265}
 -------------------------------------
-
-#### India's prospects
 <br>
 
 ```{r}
 selectInput(
-  inputId = 'social_countries',
-  label = 'Compare India with:', 
-  choices = countries, 
-  selected = countries[1]
-)
-
-selectInput(
   inputId = 'social_indicators',
-  label = 'Select an indicator:', 
-  choices = c('One', 'Two', 'Three', 'Four'), 
-  selected = 'One'
+  label = 'Select a social indicator:', 
+  choices = social_ind,
+  selected = social_ind[1]
 )
 ```
+
+<br><br><br>
 
 This dashboard will let you explore how India compares to the other [BRICS](https://en.wikipedia.org/wiki/BRICS) economies as measured by key economic, social and demographic indicators in an easy-to-use interface. <br><br><br>
 
@@ -323,7 +326,7 @@ This dashboard will let you explore how India compares to the other [BRICS](http
 <br> Forecasts: [World Population Prospects](https://population.un.org/wpp/)
 <br><br> Disclaimer: Some missing data has been imputed using KNN. </font>
 
-Row: Title (Social)
+Row: Title
 -----------------------------------------------------------------------
 
 ### {.value-box}
@@ -343,7 +346,7 @@ renderValueBox({
 ```{r}
 renderValueBox({
   valueBox(
-    value = input$social_countries,
+    value = input$countries,
     icon = NULL,
     color = 'success'
   )
@@ -352,6 +355,167 @@ renderValueBox({
 
 Row: Value boxes
 -----------------------------------------------------------------------
+
+### Life expectancy {.value-box}
+
+```{r}
+renderValueBox({
+  life <- ten_year_mean('IN', life_expectancy_at_birth, percent = FALSE)
+  
+  valueBox(
+    value = life,
+    caption = value_caption(
+      name = 'Life expectancy (years) *',
+      caption = '* 2010 - 2020 average'
+    ),
+    icon = NULL,
+    color = 'warning'
+  )
+})
+```
+
+### Mortality rate * {.value-box}
+
+```{r}
+renderValueBox({
+  mortality <- ten_year_mean('IN', mortality_rate, percent = FALSE)
+  
+  valueBox(
+    value = mortality,
+    caption = value_caption(
+      name = 'Mortality rate (under-five) *',
+      caption = '(per 1,000 live births)'
+    ),
+    icon = NULL,
+    color = 'warning'
+  )
+})
+```
+
+### Adolescent fertility rate * {.value-box}
+
+```{r}
+renderValueBox({
+  fertility <- ten_year_mean('IN', adolescent_fertility_rate, percent = FALSE)
+  
+  valueBox(
+    value = fertility,
+    caption = value_caption(
+    name = 'Adolescent fertility rate *',
+    caption = '(births per 1,000 women)'
+    ),
+    icon = NULL,
+    color = 'warning'
+  )
+})
+```
+
+### Life expectancy {.value-box}
+
+```{r}
+renderValueBox({
+  country <- country_filter()
+  life <- ten_year_mean(country, life_expectancy_at_birth, percent = FALSE)
+  
+  valueBox(
+    value = life,
+    caption = value_caption(
+    name = 'Life expectancy (years) *',
+    caption = '* 2010 - 2020 average'
+    ),
+    icon = NULL,
+    color = 'success'
+  )
+})
+```
+
+### Mortality rate * {.value-box}
+
+```{r}
+renderValueBox({
+  country <- country_filter()
+  mortality <- ten_year_mean(country, mortality_rate, percent = FALSE)
+  
+  valueBox(
+    value = mortality,
+    caption = value_caption(
+    name = 'Mortality rate (under-five) *',
+    caption = '(per 1,000 live births)'
+    ),
+    icon = NULL,
+    color = 'success'
+  )
+})
+```
+
+### Adolescent fertility rate * {.value-box}
+
+```{r}
+renderValueBox({
+  country <- country_filter()
+  fertility <- ten_year_mean(country, adolescent_fertility_rate, percent = FALSE)
+  
+  valueBox(
+    value = fertility,
+    caption = value_caption(
+    name = 'Adolescent fertility rate *',
+    caption = '(births per 1,000 women)'
+    ),
+    icon = NULL,
+    color = 'success'
+  )
+})
+```
+
+Row
+-----------------------------------------------------------------------
+
+```{r}
+econ_plot_title <- 
+  shiny::renderText({indicator_filter(
+      input = input$econ_indicators, 
+      yank = original_name
+      )})
+```
+
+### `r econ_plot_title`
+
+```{r}
+renderEcharts4r({
+   indicator <- indicator_filter(
+      input = input$econ_indicators, 
+      yank = name
+      )
+  
+    bar_chart(
+      data = wdi,
+      country = 'IN',
+      indicator = all_of(indicator),
+      color = india_color
+    )
+  })
+```
+
+### `r econ_plot_title` 
+
+```{r}
+renderEcharts4r({
+    country <- country_filter('flag_country')
+    
+    indicator <- indicator_filter(
+      input = input$econ_indicators, 
+      yank = name
+      )
+    
+    bar_chart(
+      data = wdi,
+      country = country,
+      indicator = all_of(indicator),
+      color = country_color
+    )
+  })
+```
+
 
 Climate change
 =======================================================================
