@@ -1,5 +1,5 @@
 ---
-title: 'But, how far ahead is India?'
+title: 'How far ahead is India?'
 output: 
   flexdashboard::flex_dashboard:
     theme: 
@@ -14,41 +14,16 @@ runtime: shiny
 
 ```{r setup, include=FALSE}
 pacman::p_load(
-  flexdashboard, shiny, dplyr, stringr, arrow, here, echarts4r, lubridate
+  flexdashboard, shiny, dplyr, arrow, here, stringr, lubridate, echarts4r
 )
 
 import <- function(path) read_feather(here('data', 'clean', path))
-
 brics <- import('brics.feather')
 indicators <- import('indicators.feather')
 wdi <- import('wdi.feather')
 un <- import('un.feather')
 
 countries <- brics |> filter(iso2c != 'IN') |> pull(flag_country)
-
-econ_ind <- 
-  indicators |> 
-  filter(str_detect(dashboard, 'Economic')) |> 
-  slice(6, 7, 4, 5) |> 
-  pull(display)
-
-social_ind <- 
-  indicators |> 
-  filter(str_detect(dashboard, 'Social')) |> 
-  slice(7, 8, 4, 2) |>
-  pull(display)
-
-climate_ind_one <- 
-  indicators |> 
-  filter(str_detect(dashboard, 'Climate')) |> 
-  slice(1, 2) |> 
-  pull(display)
-
-climate_ind_two <- 
-  indicators |> 
-  filter(str_detect(dashboard, 'Climate')) |> 
-  slice(3, 4) |> 
-  pull(display)
 ```
 
 ```{r functions}
@@ -88,21 +63,37 @@ indicator_filter <- function(input, yank) {
     pull({{yank}})
 }
 
-bar_chart <- function(data, country, indicator, color) {
-    data |> 
-    filter(iso2c == {{country}}) |> 
-    select(year, ` ` = {{indicator}}) |> 
-    mutate(year = as_date(paste(year, '01', '01', sep = '-'))) |> 
-    e_charts(year) |> 
-    e_bar(` `, color = color) |> 
-    e_legend(FALSE) |> 
-    e_tooltip(trigger = "axis") 
+bar_chart <- function(data = wdi, country, indicator, color, forecast = FALSE) {
+    if (forecast == FALSE) {
+      data |> 
+      filter(iso2c == {{country}}) |> 
+      select(year, ` ` = {{indicator}}) |> 
+      mutate(year = as_date(paste(year, '01', '01', sep = '-'))) |> 
+      e_charts(year) |> 
+      e_bar(` `, color = color) |> 
+      e_legend(FALSE) |> 
+      e_tooltip(trigger = "axis")
+    } else {
+      data |> 
+      filter(iso2c == {{country}}) |> 
+      select(year, ` ` = {{indicator}}, color) |> 
+      mutate(year = as_date(paste(year, '01', '01', sep = '-'))) |> 
+      group_by(color) |> 
+      e_charts(year) |> 
+      e_area(` `) |> 
+      e_legend(FALSE) |> 
+      e_tooltip(trigger = "axis") |>
+      e_color(
+        c(forecast_color, color)
+      )
+    }
 }
 ```
 
 ```{r params}
 india_color <- '#4B4B4B'
 country_color <- '#85D09C'
+forecast_color <- '#FFCC00'
 ```
 
 
@@ -120,6 +111,12 @@ Sidebar {.sidebar data-width=265}
 -------------------------------------
 
 ```{r}
+econ_ind <- 
+  indicators |> 
+  filter(str_detect(dashboard, 'Economic')) |> 
+  slice(6, 7, 4, 5) |> 
+  pull(display)
+
 selectInput(
   inputId = 'countries',
   label = 'Compare India with:', 
@@ -317,6 +314,12 @@ sidebar {.sidebar data-width=265}
 <br>
 
 ```{r}
+social_ind <- 
+  indicators |> 
+  filter(str_detect(dashboard, 'Social')) |> 
+  slice(7, 8, 4, 2) |>
+  pull(display)
+
 selectInput(
   inputId = 'social_indicators',
   label = 'Select a social indicator:', 
@@ -324,8 +327,6 @@ selectInput(
   selected = social_ind[1]
 )
 ```
-
-<br><br><br>
 
 This dashboard will let you explore how India compares to the other [BRICS](https://en.wikipedia.org/wiki/BRICS) economies as measured by key economic, social and demographic indicators in an easy-to-use interface. <br><br><br>
 
@@ -532,9 +533,21 @@ sidebar {.sidebar data-width=265}
 <br>
 
 ```{r}
+climate_ind_one <- 
+  indicators |> 
+  filter(str_detect(dashboard, 'Climate')) |> 
+  slice(1, 2) |> 
+  pull(display)
+
+climate_ind_two <- 
+  indicators |> 
+  filter(str_detect(dashboard, 'Climate')) |> 
+  slice(3, 4) |> 
+  pull(display)
+
 selectInput(
   inputId = 'climate_indicators_one',
-  label = 'Select two indicators:', 
+  label = 'Select two environmental indicators:', 
   choices = climate_ind_one,
   selected = climate_ind_one[1]
 )
@@ -546,8 +559,6 @@ selectInput(
   selected = climate_ind_two[1]
 )
 ```
-
-<br>
 
 This dashboard will let you explore how India compares to the other [BRICS](https://en.wikipedia.org/wiki/BRICS) economies as measured by key economic, social and demographic indicators in an easy-to-use interface. <br><br><br>
 
@@ -682,3 +693,220 @@ renderEcharts4r({
 
 Demography
 =======================================================================
+
+sidebar {.sidebar data-width=265}
+-------------------------------------
+<br>
+
+```{r}
+demo_ind <- 
+  indicators |> 
+  filter(str_detect(dashboard, 'Demo')) |> 
+  slice(4, 5, 6, 7) |> 
+  pull(display)
+
+selectInput(
+  inputId = 'demo_indicators',
+  label = 'Select a demographic indicator:', 
+  choices = demo_ind,
+  selected = demo_ind[1]
+)
+```
+
+This dashboard will let you explore how India compares to the other [BRICS](https://en.wikipedia.org/wiki/BRICS) economies as measured by key economic, social and demographic indicators in an easy-to-use interface. <br><br><br>
+
+<font size = '1px'> Data: [World Development Indicators](https://data.worldbank.org/)
+<br> Forecasts: [World Population Prospects](https://population.un.org/wpp/)
+<br><br> Disclaimer: Some missing data has been imputed using KNN. </font>
+
+Row: Title
+-----------------------------------------------------------------------
+
+### {.value-box}
+
+```{r}
+renderValueBox({
+  valueBox(
+    value = brics |> filter(iso2c == 'IN') |> pull(flag_country),
+    icon = NULL,
+    color = 'warning'
+  )
+})
+```
+
+### {.value-box}
+
+```{r}
+renderValueBox({
+  valueBox(
+    value = input$countries,
+    icon = NULL,
+    color = 'success'
+  )
+})
+```
+
+Row: Value boxes
+-----------------------------------------------------------------------
+
+### Population growth {.value-box}
+
+```{r}
+renderValueBox({
+  growth <- ten_year_mean('IN', population_growth)
+  
+  valueBox(
+    value = growth,
+    caption = value_caption(
+      name = 'Population growth rate *',
+      caption = '* 2010 - 2020 average'
+    ),
+    icon = NULL,
+    color = 'warning'
+  )
+})
+```
+
+### Rural population * {.value-box}
+
+```{r}
+renderValueBox({
+  rural <- ten_year_mean('IN', rural_population)
+  
+  valueBox(
+    value = rural,
+    caption = value_caption(
+      name = 'People living in rural areas *',
+      caption = '(% of total population)'
+    ),
+    icon = NULL,
+    color = 'warning'
+  )
+})
+```
+
+### Urban population * {.value-box}
+
+```{r}
+renderValueBox({
+  urban <- ten_year_mean('IN', urban_population)
+  
+  valueBox(
+    value = urban,
+    caption = value_caption(
+    name = 'People living in urban areas *',
+    caption = '(% of total population)'
+    ),
+    icon = NULL,
+    color = 'warning'
+  )
+})
+```
+
+### Population growth {.value-box}
+
+```{r}
+renderValueBox({
+  country <- country_filter()
+  growth <- ten_year_mean(country, population_growth)
+  
+  valueBox(
+    value = growth,
+    caption = value_caption(
+    name = 'Population growth rate *',
+    caption = '* 2010 - 2020 average'
+    ),
+    icon = NULL,
+    color = 'success'
+  )
+})
+```
+
+### Rural population * {.value-box}
+
+```{r}
+renderValueBox({
+  country <- country_filter()
+  rural <- ten_year_mean(country, rural_population)
+  
+  valueBox(
+    value = rural,
+    caption = value_caption(
+    name = 'People living in rural areas *',
+    caption = '(% of total population)'
+    ),
+    icon = NULL,
+    color = 'success'
+  )
+})
+```
+
+### Urban population * {.value-box}
+
+```{r}
+renderValueBox({
+  country <- country_filter()
+  urban <- ten_year_mean(country, urban_population)
+  
+  valueBox(
+    value = urban,
+    caption = value_caption(
+    name = 'People living in urban areas *',
+    caption = '(% of total population)'
+    ),
+    icon = NULL,
+    color = 'success'
+  )
+})
+```
+
+Row
+-----------------------------------------------------------------------
+
+```{r}
+demo_plot_title <- 
+  shiny::renderText({indicator_filter(
+      input = input$demo_indicators, 
+      yank = original_name
+      )})
+```
+
+### `r demo_plot_title`
+
+```{r}
+renderEcharts4r({
+   indicator <- indicator_filter(
+      input = input$demo_indicators, 
+      yank = name
+      )
+  
+    bar_chart(
+      data = un,
+      country = 'IN',
+      indicator = all_of(indicator),
+      color = india_color,
+      forecast = TRUE
+    )
+  })
+```
+
+### `r demo_plot_title` 
+
+```{r}
+renderEcharts4r({
+    country <- country_filter('flag_country')
+    
+    indicator <- indicator_filter(
+      input = input$demo_indicators, 
+      yank = name
+      )
+    
+    bar_chart(
+      data = un,
+      country = country,
+      indicator = all_of(indicator),
+      color = country_color,
+      forecast = TRUE
+    )
+  })
+```
