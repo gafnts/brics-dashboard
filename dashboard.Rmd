@@ -95,13 +95,8 @@ country_color <- '#85D09C'
 
 
 ```{css}
-h4, .h4 {
-  font-size: 16.5px;
-  font-weight: 600;
-}
-
 .shiny-text-output {  /* chart_title  */
-  font-size: 20px;
+  font-size: 16px;
   font-weight: bold;
 }
 ```
@@ -471,19 +466,19 @@ Row
 -----------------------------------------------------------------------
 
 ```{r}
-econ_plot_title <- 
+social_plot_title <- 
   shiny::renderText({indicator_filter(
-      input = input$econ_indicators, 
+      input = input$social_indicators, 
       yank = original_name
       )})
 ```
 
-### `r econ_plot_title`
+### `r social_plot_title`
 
 ```{r}
 renderEcharts4r({
    indicator <- indicator_filter(
-      input = input$econ_indicators, 
+      input = input$social_indicators, 
       yank = name
       )
   
@@ -496,14 +491,14 @@ renderEcharts4r({
   })
 ```
 
-### `r econ_plot_title` 
+### `r social_plot_title` 
 
 ```{r}
 renderEcharts4r({
     country <- country_filter('flag_country')
     
     indicator <- indicator_filter(
-      input = input$econ_indicators, 
+      input = input$social_indicators, 
       yank = name
       )
     
