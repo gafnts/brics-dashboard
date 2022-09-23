@@ -37,6 +37,18 @@ social_ind <-
   filter(str_detect(dashboard, 'Social')) |> 
   slice(7, 8, 4, 2) |>
   pull(display)
+
+climate_ind_one <- 
+  indicators |> 
+  filter(str_detect(dashboard, 'Climate')) |> 
+  slice(1, 2) |> 
+  pull(display)
+
+climate_ind_two <- 
+  indicators |> 
+  filter(str_detect(dashboard, 'Climate')) |> 
+  slice(3, 4) |> 
+  pull(display)
 ```
 
 ```{r functions}
@@ -514,6 +526,159 @@ renderEcharts4r({
 
 Climate change
 =======================================================================
+
+sidebar {.sidebar data-width=265}
+-------------------------------------
+<br>
+
+```{r}
+selectInput(
+  inputId = 'climate_indicators_one',
+  label = 'Select two indicators:', 
+  choices = climate_ind_one,
+  selected = climate_ind_one[1]
+)
+
+selectInput(
+  inputId = 'climate_indicators_two',
+  label = NULL, 
+  choices = climate_ind_two,
+  selected = climate_ind_two[1]
+)
+```
+
+<br>
+
+This dashboard will let you explore how India compares to the other [BRICS](https://en.wikipedia.org/wiki/BRICS) economies as measured by key economic, social and demographic indicators in an easy-to-use interface. <br><br><br>
+
+<font size = '1px'> Data: [World Development Indicators](https://data.worldbank.org/)
+<br> Forecasts: [World Population Prospects](https://population.un.org/wpp/)
+<br><br> Disclaimer: Some missing data has been imputed using KNN. </font>
+
+Row: Title
+-----------------------------------------------------------------------
+
+### {.value-box}
+
+```{r}
+renderValueBox({
+  valueBox(
+    value = brics |> filter(iso2c == 'IN') |> pull(flag_country),
+    icon = NULL,
+    color = 'warning'
+  )
+})
+```
+
+### {.value-box}
+
+```{r}
+renderValueBox({
+  valueBox(
+    value = input$countries,
+    icon = NULL,
+    color = 'success'
+  )
+})
+```
+
+Row
+-----------------------------------------------------------------------
+
+```{r}
+climate_plot_title_one <- 
+  shiny::renderText({indicator_filter(
+      input = input$climate_indicators_one, 
+      yank = original_name
+      )})
+```
+
+### `r climate_plot_title_one`
+
+```{r}
+renderEcharts4r({
+   indicator <- indicator_filter(
+      input = input$climate_indicators_one, 
+      yank = name
+      )
+  
+    bar_chart(
+      data = wdi,
+      country = 'IN',
+      indicator = all_of(indicator),
+      color = india_color
+    )
+  })
+```
+
+### `r climate_plot_title_one` 
+
+```{r}
+renderEcharts4r({
+    country <- country_filter('flag_country')
+    
+    indicator <- indicator_filter(
+      input = input$climate_indicators_one, 
+      yank = name
+      )
+    
+    bar_chart(
+      data = wdi,
+      country = country,
+      indicator = all_of(indicator),
+      color = country_color
+    )
+  })
+```
+
+Row
+-----------------------------------------------------------------------
+
+```{r}
+climate_plot_title_two <- 
+  shiny::renderText({indicator_filter(
+      input = input$climate_indicators_two, 
+      yank = original_name
+      )})
+```
+
+### `r climate_plot_title_two`
+
+```{r}
+renderEcharts4r({
+   indicator <- indicator_filter(
+      input = input$climate_indicators_two, 
+      yank = name
+      )
+  
+    bar_chart(
+      data = wdi,
+      country = 'IN',
+      indicator = all_of(indicator),
+      color = india_color
+    )
+  })
+```
+
+### `r climate_plot_title_two` 
+
+```{r}
+renderEcharts4r({
+    country <- country_filter('flag_country')
+    
+    indicator <- indicator_filter(
+      input = input$climate_indicators_two, 
+      yank = name
+      )
+    
+    bar_chart(
+      data = wdi,
+      country = country,
+      indicator = all_of(indicator),
+      color = country_color
+    )
+  })
+```
 
 Demography
 =======================================================================
