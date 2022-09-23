@@ -45,6 +45,28 @@ indicators <-
       dashboard = rep('Demography', 4),
       original_name = un_raw |> select(!1:2) |> colnames()
     )
+  )
+```
+
+```{r}
+indicators |> 
+  mutate(
+    display = replace(
+      display,
+      display == 'Poverty headcount ratio at $2.15 a day (% of population)',
+      'Poverty headcount ratio'),
+    display = replace(
+      display,
+      display == 'Government expenditure on education',
+      'Education expenditure'),
+    display = replace(
+      display,
+      display == 'Labor force participation rate',
+      'Labor force participation'),
+    display = replace(
+      display,
+      display == 'Proportion of seats held by women in national parliaments',
+      'Women in national parliaments'),
   ) |> 
   write_feather(here('data', 'clean', 'indicators.feather'))
 ```
