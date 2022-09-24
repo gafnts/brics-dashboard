@@ -14,7 +14,7 @@ runtime: shiny
 
 ```{r setup, include=FALSE}
 pacman::p_load(
-  flexdashboard, shiny, dplyr, arrow, here, stringr, lubridate, echarts4r, bslib
+  flexdashboard, shiny, dplyr, arrow, here, stringr, lubridate, echarts4r
 )
 
 import <- function(path) read_feather(here('data', 'clean', path))
@@ -35,17 +35,16 @@ value_caption <- function(name, caption = '* 2010 - 2020 average') {
 }
 
 ten_year_mean <- function(country, var, percent = TRUE) {
-    if (percent == TRUE) {
-      wdi |> 
-      filter(iso2c == {{country}}) |> 
-      filter(year >= 2010 & year <= 2020) |> 
-      summarise(mean = round(mean({{var}}), 2)) |> 
-      mutate(mean = paste0(mean, '%'))
-    } else {
+    summarised <- 
       wdi |> 
       filter(iso2c == {{country}}) |> 
       filter(year >= 2010 & year <= 2020) |> 
       summarise(mean = round(mean({{var}}), 2))
+    if (percent == TRUE) {
+      summarised |> 
+      mutate(mean = paste0(mean, '%'))
+    } else {
+      summarised
     }
 }
 
