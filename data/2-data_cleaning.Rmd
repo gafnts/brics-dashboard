@@ -40,7 +40,7 @@ indicators <-
         select(!1:2) |> 
         colnames() |> 
         str_replace('_', ' ') |> 
-        str_to_title(),
+        str_to_sentence(),
       indicator = un_raw |> select(!1:2) |> colnames(),
       dashboard = rep('Demography', 4),
       original_name = display
@@ -107,7 +107,16 @@ indicators |>
         original_name,
         original_name == 'Renewable energy consumption (% of total final energy consumption)',
         'Renewable energy consumption (% of total consumption)'
-      ),
+      )
+  # ORIGINAL NAME
+  # Demography
+  ) |>
+  mutate(
+    original_name = replace(
+      original_name,
+      original_name == 'Total population',
+      'Total population (millions)'
+    )
   ) |> 
   write_feather(here('data', 'clean', 'indicators.feather'))
 ```
@@ -218,7 +227,10 @@ py_wdi_impute.isna().any()
 
 ```{r}
 un_raw |> 
-  mutate(color = if_else(year %in% 1950:2022, 'observed', 'forecasted')) |> 
+  mutate(
+    color = if_else(year %in% 1950:2022, 'observed', 'forecasted'),
+    total_population = total_population / 1000
+  ) |> 
   write_feather(here('data', 'clean', 'un.feather'))
 ```
 
